@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Albarán Bencar</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef1f5;color:#172a4d;font-family:Arial,sans-serif}
+.page{max-width:900px;margin:25px auto;padding:0 15px}
+.sheet{background:#fff;padding:28px;box-shadow:0 2px 14px #0002;border-radius:8px}
+.company{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #17366c;padding-bottom:14px;margin-bottom:18px;align-items:flex-start}
+.company h1{margin:0 0 5px;font-size:25px;color:#17366c}.company p{margin:3px 0;font-size:13px;color:#555}.company-meta{font-size:11px;color:#4b5563;line-height:1.35;margin-top:8px}.company-meta strong{color:#17366c}.certs{display:flex;align-items:center;gap:12px;margin-top:10px}.expert-logo{width:82px;height:82px;object-fit:contain}.ce-logo{width:82px;height:82px;object-fit:contain}.certs{align-items:center}
+.qrbox{text-align:center;min-width:110px}.qrbox #qrcode{display:inline-block}.qrbox small{display:block;margin-top:5px;color:#666;font-size:10px}
+.title{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.title h2{margin:0;font-size:22px}.number{font-size:20px;font-weight:700;color:#17366c}
+.section{margin-top:18px}.section h3{font-size:14px;margin:0 0 8px;background:#17366c;color:#fff;padding:7px 9px;border-radius:4px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);border-left:1px solid #d7dce4;border-top:1px solid #d7dce4}
+.cell{padding:8px 9px;border-right:1px solid #d7dce4;border-bottom:1px solid #d7dce4;min-height:48px}.cell.wide{grid-column:span 2}.cell.full{grid-column:1/-1}.label{display:block;font-size:10px;text-transform:uppercase;color:#667085;font-weight:700;margin-bottom:4px}.value{font-size:13px;white-space:pre-wrap;word-break:break-word;min-height:15px}
+.footer{margin-top:22px;padding-top:12px;border-top:1px solid #d7dce4;text-align:center;color:#667085;font-size:11px}
+.actions{display:flex;justify-content:center;gap:10px;margin:15px auto;max-width:900px}.actions button{border:0;border-radius:5px;padding:11px 18px;font-weight:700;cursor:pointer}.print{background:#17366c;color:white}.back{background:#dfe5ef;color:#17366c}
+.loading,.error{background:#fff;padding:30px;border-radius:8px;box-shadow:0 2px 10px #0002;text-align:center}.error{color:#9b2226}
+@media(max-width:700px){.company{flex-direction:column}.qrbox{align-self:flex-end}.grid{grid-template-columns:1fr 1fr}.cell.wide{grid-column:span 2}.sheet{padding:18px}}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.cell.wide{grid-column:auto}.title{align-items:flex-start;gap:8px;flex-direction:column}}
+@media print{
+ body{background:#fff}.page{max-width:none;margin:0;padding:0}.sheet{box-shadow:none;border-radius:0;padding:12mm}.actions{display:none}.company{break-inside:avoid}.section{break-inside:avoid}.section h3{background:#17366c!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div id="loading" class="loading">Cargando albarán…</div>
+  <div id="error" class="error" style="display:none"></div>
+  <div id="content" style="display:none">
+    <div class="sheet">
+      <div class="company">
+        <div>
+          <h1>HORMIGONES BENCAR, S.L.</h1>
+          <p><strong>Hormigón y Morteros</strong></p>
+          <div class="company-meta">
+            <div><strong>C.I.F.:</strong> B-44766087</div>
+            <div><strong>Domicilio social:</strong> Camino del Noguera, 8 · 11130 Chiclana de la Frontera (Cádiz)</div>
+            <div><strong>Planta Chiclana:</strong> Pol. Ind. Pelagatos · <strong>Tel.:</strong> 605 057 121 · 11130 Chiclana (Cádiz)</div>
+          </div>
+          <div class="certs">
+            <img class="expert-logo" src="assets/hormigon-expert.png?v=2" alt="Hormigón Expert ANEFHOP">
+            <img class="ce-logo" src="assets/marcado-ce.png?v=2" alt="Marcado CE">
+          </div>
+        </div>
+        <div class="qrbox"><div id="qrcode"></div><small>Escanea para consultar este albarán</small></div>
+      </div>
+
+      <div class="title"><h2>ALBARÁN DE ENTREGA</h2><div class="number" id="numero"></div></div>
+
+      <div class="section"><h3>Datos del albarán</h3>
+        <div class="grid">
+          <div class="cell"><span class="label">Fecha</span><div class="value" id="fecha"></div></div>
+          <div class="cell"><span class="label">Hora de carga</span><div class="value" id="hora"></div></div>
+          <div class="cell"><span class="label">Hora límite</span><div class="value" id="hora_limite"></div></div>
+          <div class="cell"><span class="label">Municipio</span><div class="value" id="municipio"></div></div>
+          <div class="cell wide"><span class="label">Cliente</span><div class="value" id="cliente"></div></div>
+          <div class="cell wide"><span class="label">Obra</span><div class="value" id="obra"></div></div>
+        </div>
+      </div>
+
+      <div class="section"><h3>Transporte</h3>
+        <div class="grid">
+          <div class="cell"><span class="label">N.º camión</span><div class="value" id="numero_camion"></div></div>
+          <div class="cell"><span class="label">Matrícula</span><div class="value" id="matricula"></div></div>
+          <div class="cell wide"><span class="label">Conductor</span><div class="value" id="conductor"></div></div>
+          <div class="cell"><span class="label">DNI conductor</span><div class="value" id="dni_conductor"></div></div>
+          <div class="cell wide"><span class="label">Transportista</span><div class="value" id="transportista"></div></div>
+          <div class="cell wide"><span class="label">Domicilio transportista</span><div class="value" id="domicilio_transportista"></div></div>
+        </div>
+      </div>
+
+      <div class="section"><h3>Material suministrado</h3>
+        <div class="grid">
+          <div class="cell wide"><span class="label">Tipo de hormigón</span><div class="value" id="tipo_hormigon"></div></div>
+          <div class="cell"><span class="label">Cantidad</span><div class="value" id="cantidad_m3"></div></div>
+          <div class="cell wide"><span class="label">Cemento</span><div class="value" id="cemento"></div></div>
+          <div class="cell wide"><span class="label">Aditivos</span><div class="value" id="aditivos"></div></div>
+          <div class="cell"><span class="label">Agua añadida</span><div class="value" id="agua_anadida"></div></div>
+          <div class="cell wide"><span class="label">Adiciones</span><div class="value" id="adiciones"></div></div>
+        </div>
+      </div>
+
+      <div class="section"><h3>Recepción y descarga</h3>
+        <div class="grid">
+          <div class="cell wide"><span class="label">Responsable de recepción</span><div class="value" id="responsable_recepcion"></div></div>
+          <div class="cell"><span class="label">Llegada a obra</span><div class="value" id="hora_llegada"></div></div>
+          <div class="cell"><span class="label">Inicio descarga</span><div class="value" id="hora_inicio_descarga"></div></div>
+          <div class="cell"><span class="label">Fin descarga</span><div class="value" id="hora_fin_descarga"></div></div>
+          <div class="cell full"><span class="label">Observaciones / datos del transporte</span><div class="value" id="observaciones"></div></div>
+        </div>
+      </div>
+
+      <div class="footer">Documento generado y almacenado digitalmente · HORMIGONES BENCAR S.L.</div>
+    </div>
+  </div>
+</div>
+<div class="actions" id="actions" style="display:none"><button class="print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button><button class="back" onclick="history.back()">← Volver</button></div>
+<script>
+const API="https://parajahsruersgyqbqca.supabase.co/functions/v1/datos-albaran";
+const params=new URLSearchParams(location.search); const token=params.get("token");
+const $=id=>document.getElementById(id);
+const text=(id,v)=>$(id).textContent=(v===null||v===undefined||v==="")?"—":String(v);
+function formatDate(v){if(!v)return "—"; const p=String(v).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:v}
+function formatTime(v){return v?String(v).slice(0,5):"—"}
+async function load(){
+ if(!token){$("loading").style.display="none";$("error").style.display="block";$("error").textContent="Falta el identificador del albarán.";return}
+ try{
+  const r=await fetch(`${API}?token=${encodeURIComponent(token)}`);
+  const raw=await r.text();
+  let data;
+  try{ data=JSON.parse(raw); }catch(_){ throw new Error("La función de albaranes no está devolviendo JSON. Revisa el despliegue de datos-albaran."); }
+  if(!r.ok) throw new Error(data.error||"No se ha podido cargar el albarán.");
+  text("numero",data.numero_albaran); text("fecha",formatDate(data.fecha)); text("hora",formatTime(data.hora));
+  text("hora_limite",data.hora_limite?formatTime(data.hora_limite):"—"); text("cliente",data.cliente); text("obra",data.obra); text("municipio",data.municipio);
+  text("numero_camion",data.numero_camion); text("matricula",data.matricula); text("conductor",data.conductor); text("dni_conductor",data.dni_conductor); text("transportista",data.transportista); text("domicilio_transportista",data.domicilio_transportista);
+  text("tipo_hormigon",data.tipo_hormigon); text("cantidad_m3",data.cantidad_m3!==null&&data.cantidad_m3!==undefined?`${data.cantidad_m3} m³`:null); text("cemento",data.cemento); text("aditivos",data.aditivos); text("agua_anadida",data.agua_anadida!==null&&data.agua_anadida!==undefined?`${data.agua_anadida} L`:null); text("adiciones",data.adiciones);
+  text("responsable_recepcion",data.responsable_recepcion); text("hora_llegada",formatTime(data.hora_llegada)); text("hora_inicio_descarga",formatTime(data.hora_inicio_descarga)); text("hora_fin_descarga",formatTime(data.hora_fin_descarga)); text("observaciones",data.observaciones);
+  const publicUrl=new URL(`ver-albaran.html?token=${encodeURIComponent(token)}`,location.href).href;
+  if(window.QRCode) new QRCode($("qrcode"),{text:publicUrl,width:88,height:88});
+  $("loading").style.display="none";$("content").style.display="block";$("actions").style.display="flex";
+ }catch(e){$("loading").style.display="none";$("error").style.display="block";$("error").textContent=e.message||"Error cargando el albarán.";}
+}
+load();
+</script>
+</body>
+</html>

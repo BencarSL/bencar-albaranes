@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Albaranes Bencar</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef1f5;color:#172a4d}
+header{background:#17366c;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+header b{font-size:21px}button{border:0;border-radius:5px;padding:10px 15px;cursor:pointer;font-weight:700}
+.primary{background:#17366c;color:#fff}.secondary{background:#dfe5ef;color:#17366c}.danger{background:#9b2226;color:#fff}
+main{max-width:1180px;margin:20px auto;padding:0 15px}.card{background:#fff;border-radius:9px;box-shadow:0 2px 10px #0001;padding:20px;margin-bottom:18px}
+h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.wide{grid-column:span 2}.full{grid-column:1/-1}
+label{font-size:12px;font-weight:700;display:block;margin-bottom:4px}input,select,textarea{width:100%;padding:9px;border:1px solid #c7cfda;border-radius:5px;font-size:14px}textarea{min-height:80px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.status{padding:10px;border-radius:5px;background:#f1f4f8;margin-top:12px;display:none}
+.login{max-width:420px;margin:80px auto}.muted{color:#667085;font-size:13px}.truck-found{background:#eef7ee;border:1px solid #b8d8b8;padding:10px;border-radius:5px;margin-top:8px}
+#app{display:none}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.wide{grid-column:span 2}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><b>Hormigones Bencar · Albaranes digitales</b><button id="logout" class="secondary" style="display:none">Cerrar sesión</button></header>
+
+<div id="login" class="login card">
+<h2>Acceso</h2><p class="muted">Accede con el usuario de Supabase que hemos creado.</p>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label style="margin-top:10px">Contraseña</label><input id="password" type="password" autocomplete="current-password">
+<div class="actions" style="margin-top:15px"><button id="loginBtn" class="primary">Entrar</button></div>
+<div id="loginMsg" class="status"></div>
+</div>
+
+<main id="app">
+<div class="card">
+<h2>Nuevo albarán</h2>
+<div class="grid">
+<div><label>N.º albarán</label><input id="numero_albaran"></div>
+<div><label>Fecha</label><input id="fecha" type="date"></div>
+<div><label>Hora de carga</label><input id="hora" type="time"></div>
+<div><label>Hora límite de uso</label><input id="hora_limite" type="time"></div>
+<div class="wide"><label>Cliente</label><input id="cliente"></div>
+<div class="wide"><label>Obra</label><input id="obra"></div>
+<div class="wide"><label>Municipio</label><input id="municipio"></div>
+<div><label>N.º camión</label><input id="numero_camion" list="camionesList" placeholder="Ej. 202"><datalist id="camionesList"></datalist>
+<div id="truckInfo" class="truck-found" style="display:none"></div></div>
+<div><label>Matrícula</label><input id="matricula" readonly></div>
+<div class="wide"><label>Conductor</label><input id="conductor" readonly></div>
+<div><label>DNI conductor</label><input id="dni_conductor" readonly></div>
+<div class="wide"><label>Transportista / empresa</label><input id="transportista" readonly></div>
+<div class="wide"><label>Domicilio transportista</label><input id="domicilio_transportista" readonly></div>
+<div class="wide"><label>Tipo de hormigón</label><input id="tipo_hormigon" placeholder="Escribir manualmente"></div>
+<div><label>Cantidad (m³)</label><input id="cantidad_m3" type="number" step="0.01"></div>
+<div><label>Cemento</label><select id="cemento"><option>Ecoplanet CEM II/B-M S-L 42,5R</option><option>CEM II/A-L 42,5 R</option><option>CEM I 42,5R-SR 3</option></select></div>
+<div class="wide"><label>Aditivo</label><select id="aditivos"><option>POZZOLITH 7012 PLASTIFICANTE BASF 8% S.P. PC</option><option>POZZOLITH 7012 PLASTIFICANTE BASF 8% S.P. PC + MASTER EASE 3850 SUPERFLUIDIFICANTE BASF 10 % S.P.C.</option></select></div>
+<div><label>Responsable recepción</label><input id="responsable_recepcion" readonly></div>
+<div><label>Hora llegada obra</label><input id="hora_llegada" type="time"></div>
+<div><label>Inicio descarga</label><input id="hora_inicio_descarga" type="time"></div>
+<div><label>Fin descarga</label><input id="hora_fin_descarga" type="time"></div>
+<div><label>Litros de agua añadidos</label><input id="agua_anadida" type="number" step="0.01"></div>
+<div class="wide"><label>Adiciones</label><input id="adiciones"></div>
+<div class="full"><label>Observaciones / datos del transporte</label><textarea id="observaciones"></textarea></div>
+</div>
+<div class="actions" style="margin-top:16px"><button id="saveBtn" class="primary">Guardar albarán</button><button id="clearBtn" class="secondary">Limpiar</button></div>
+<div id="saveMsg" class="status"></div>
+<div id="viewSaved" class="actions" style="display:none;margin-top:12px"><button id="viewSavedBtn" class="primary">👁️ VER ALBARÁN</button></div>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://parajahsruersgyqbqca.supabase.co";
+const SUPABASE_KEY="sb_publishable_WhULH-bqBDsDkI31AYF1oQ_Dq_ffcgU";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const $=id=>document.getElementById(id);
+function msg(el,text,ok=false){el.style.display='block';el.textContent=text;el.style.background=ok?'#e9f7ec':'#fff1f0';el.style.color=ok?'#146c2e':'#9b2226'}
+function today(){return new Date().toISOString().slice(0,10)}
+function nowTime(){return new Date().toTimeString().slice(0,5)}
+function addMinutesToTime(hhmm, minutes){
+  if(!hhmm) return "";
+  const [h,m]=hhmm.split(":").map(Number);
+  const total=h*60+m+minutes;
+  const t=((total%1440)+1440)%1440;
+  return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
+}
+function updateCalculatedFields(){
+  $("responsable_recepcion").value=$("cliente").value.trim();
+  $("hora_limite").value=addMinutesToTime($("hora").value,90);
+}
+function updateTransportObservation(){
+  const empresa=$("transportista").value.trim();
+  const domicilio=$("domicilio_transportista").value.trim();
+  if(!empresa && !domicilio){
+    $("observaciones").value="";
+    return;
+  }
+  $("observaciones").value=`TRANSPORTISTA: ${empresa}${domicilio ? "\nDOMICILIO: "+domicilio : ""}`;
+}
+function setDefaults(){
+ $("fecha").value=today(); $("hora").value=nowTime();
+ $("hora_limite").value=""; $("hora_llegada").value=""; $("hora_inicio_descarga").value=""; $("hora_fin_descarga").value="";
+ $("numero_albaran").value=""; $("cliente").value=""; $("obra").value=""; $("municipio").value="";
+ ["numero_camion","matricula","conductor","dni_conductor","transportista","domicilio_transportista","tipo_hormigon","cantidad_m3","responsable_recepcion","agua_anadida","adiciones","observaciones"].forEach(id=>$(id).value="");
+ $("truckInfo").style.display="none";
+}
+function makeNumber(){const d=new Date();return "DIG-"+d.getFullYear()+d.getMonth().toString().padStart(2,"0")+d.getDate().toString().padStart(2,"0")+"-"+d.getTime().toString().slice(-6)}
+async function loadTrucks(){
+ const {data,error}=await sb.from("camiones").select("numero_camion").order("numero_camion");
+ if(error){console.error(error);return}
+ $("camionesList").innerHTML=data.map(x=>`<option value="${x.numero_camion}"></option>`).join("");
+}
+async function findTruck(){
+ const n=$("numero_camion").value.trim(); if(!n)return;
+ const {data,error}=await sb.from("camiones").select("*").eq("numero_camion",n).maybeSingle();
+ if(error){msg($("saveMsg"),"Error consultando camión: "+error.message);return}
+ if(!data){$("truckInfo").style.display="none";["matricula","conductor","dni_conductor","transportista","domicilio_transportista"].forEach(id=>$(id).value="");return}
+ $("matricula").value=data.matricula||"";
+ $("conductor").value=data.conductor||"";
+ $("dni_conductor").value=data.dni||"";
+ $("transportista").value=data.empresa||"";
+ $("domicilio_transportista").value=data.domicilio||"";
+ $("truckInfo").style.display="block";$("truckInfo").textContent=`Camión ${data.numero_camion} · ${data.matricula||""} · ${data.conductor||""}`;
+}
+$("numero_camion").addEventListener("change",findTruck);$("numero_camion").addEventListener("blur",findTruck);
+$("cliente").addEventListener("input",()=>{$("responsable_recepcion").value=$("cliente").value.trim()});
+$("hora").addEventListener("input",()=>{$("hora_limite").value=addMinutesToTime($("hora").value,90)});
+$("hora").addEventListener("change",()=>{$("hora_limite").value=addMinutesToTime($("hora").value,90)});
+$("loginBtn").onclick=async()=>{
+ const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ if(error){msg($("loginMsg"),error.message);return}
+};
+$("logout").onclick=()=>sb.auth.signOut();
+$("clearBtn").onclick=()=>{setDefaults();$("numero_albaran").value=makeNumber();$("viewSaved").style.display="none";};
+$("saveBtn").onclick=async()=>{
+ const numero=$("numero_albaran").value.trim()||makeNumber();
+ if(!$("numero_camion").value.trim()){msg($("saveMsg"),"Introduce el número de camión.");return}
+ const payload={
+ numero_albaran:numero,fecha:$("fecha").value,hora:$("hora").value,
+ cliente:$("cliente").value||null,obra:$("obra").value||null,municipio:$("municipio").value||null,
+ numero_camion:$("numero_camion").value||null,matricula:$("matricula").value||null,conductor:$("conductor").value||null,
+ dni_conductor:$("dni_conductor").value||null,transportista:$("transportista").value||null,domicilio_transportista:$("domicilio_transportista").value||null,
+ tipo_hormigon:$("tipo_hormigon").value||null,cantidad_m3:$("cantidad_m3").value?Number($("cantidad_m3").value):null,
+ cemento:$("cemento").value,aditivos:$("aditivos").value,responsable_recepcion:$("responsable_recepcion").value||null,
+ hora_llegada:$("hora_llegada").value||null,hora_inicio_descarga:$("hora_inicio_descarga").value||null,hora_fin_descarga:$("hora_fin_descarga").value||null,
+ agua_anadida:$("agua_anadida").value?Number($("agua_anadida").value):null,observaciones:$("observaciones").value||null
+ };
+ const {data,error}=await sb.from("albaranes").insert(payload).select().single();
+ if(error){msg($("saveMsg"),"No se pudo guardar: "+error.message);return}
+ msg($("saveMsg"),`Albarán ${data.numero_albaran} guardado correctamente.`,true);
+ $("viewSaved").style.display="flex";
+ $("viewSavedBtn").onclick=()=>{ window.location.href=`ver-albaran.html?token=${encodeURIComponent(data.id)}`; };
+ $("numero_albaran").value=makeNumber();
+};
+sb.auth.onAuthStateChange(async(event,session)=>{
+ const logged=!!session;
+ $("login").style.display=logged?"none":"block";$("app").style.display=logged?"block":"none";$("logout").style.display=logged?"block":"none";
+ if(logged){setDefaults();$("numero_albaran").value=makeNumber();await loadTrucks()}
+});
+(async()=>{const {data}=await sb.auth.getSession(); if(data.session){setDefaults();$("numero_albaran").value=makeNumber();await loadTrucks()}})();
+</script>
+</body>
+</html>
