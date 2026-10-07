@@ -34,7 +34,7 @@ label{font-size:12px;font-weight:700;display:block;margin-bottom:4px}input,selec
 <div class="card">
 <h2>Nuevo albarán</h2>
 <div class="grid">
-<div><label>N.º albarán</label><input id="numero_albaran"></div>
+<div><label>N.º albarán</label><input id="numero_albaran" placeholder="Introduce el número de tu programa de carga"></div>
 <div><label>Fecha</label><input id="fecha" type="date"></div>
 <div><label>Hora de carga</label><input id="hora" type="time"></div>
 <div><label>Hora límite de uso</label><input id="hora_limite" type="time"></div>
@@ -130,9 +130,10 @@ $("loginBtn").onclick=async()=>{
  if(error){msg($("loginMsg"),error.message);return}
 };
 $("logout").onclick=()=>sb.auth.signOut();
-$("clearBtn").onclick=()=>{setDefaults();$("numero_albaran").value=makeNumber();$("viewSaved").style.display="none";};
+$("clearBtn").onclick=()=>{setDefaults();$("viewSaved").style.display="none";};
 $("saveBtn").onclick=async()=>{
- const numero=$("numero_albaran").value.trim()||makeNumber();
+ const numero=$("numero_albaran").value.trim();
+ if(!numero){msg($("saveMsg"),"Introduce el número de albarán de tu programa de carga.");return}
  if(!$("numero_camion").value.trim()){msg($("saveMsg"),"Introduce el número de camión.");return}
  const payload={
  numero_albaran:numero,fecha:$("fecha").value,hora:$("hora").value,
@@ -149,14 +150,14 @@ $("saveBtn").onclick=async()=>{
  msg($("saveMsg"),`Albarán ${data.numero_albaran} guardado correctamente.`,true);
  $("viewSaved").style.display="flex";
  $("viewSavedBtn").onclick=()=>{ window.location.href=`ver-albaran.html?token=${encodeURIComponent(data.id)}`; };
- $("numero_albaran").value=makeNumber();
+ $("numero_albaran").value="";
 };
 sb.auth.onAuthStateChange(async(event,session)=>{
  const logged=!!session;
  $("login").style.display=logged?"none":"block";$("app").style.display=logged?"block":"none";$("logout").style.display=logged?"block":"none";
- if(logged){setDefaults();$("numero_albaran").value=makeNumber();await loadTrucks()}
+ if(logged){setDefaults();await loadTrucks()}
 });
-(async()=>{const {data}=await sb.auth.getSession(); if(data.session){setDefaults();$("numero_albaran").value=makeNumber();await loadTrucks()}})();
+(async()=>{const {data}=await sb.auth.getSession(); if(data.session){setDefaults();await loadTrucks()}})();
 </script>
 </body>
 </html>
